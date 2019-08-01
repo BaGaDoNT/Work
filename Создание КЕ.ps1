@@ -1,5 +1,6 @@
 
-$org = Read-Host "введите имя организации"
+#Ввод организации
+$org = Read-Host "введите имя организации" #Требует точного совпадения
 $orgname = switch ($org) {
     bil*                            {"БИЛ (БрэндИмпортЛоджистик)" }
     *БрэндИмпортЛоджистик*          {"БИЛ (БрэндИмпортЛоджистик)" }
@@ -9,19 +10,47 @@ $orgname = switch ($org) {
     Default                         {write-host "неизвестная организация"; Exit}
 }
 
+#Идентификация ПК
 $notebook = Read-Host "Это ноутбук? (Y or N)"
-$type = switch($notebook()) 
+[bool]$type = switch($notebook) 
 { 
-    {($_ -eq "y") -or ($_ -eq "yes")} { "You entered Yes.", $true } 
-    {($_ -eq "n") -or ($_ -eq "no")} { "You entered no.", $folse}
-    Default {$folse}
+    y {$true; Write-Host "You entered Yes."} 
+    n {$false; Write-Host "You entered no."}
+    Default {$false}
 }
 
+#Добавление Критичности
+$Critical = Read-Host "Укажите притичность. 1 - низкая; 2- высокая"
+If ($Critical -eq 2) {$crit="высокая"} else { $crit="низкая"}
+
+#Добавление статуса
+$status = "Выдано"
+
+#Добавление описания.
+$discr = Read-Host "Есть TeamViewer (N или ID)"
+if ($discr -ne 'N') 
+    {$twid = $discr
+        $tdpw = Read-Host "введите пароль TeamViewer"
+    }
+$helper = Read-Host "пользователь Helper? (N или Пароль от него)"
+    if ($discr -ne 'N') 
+        {$helperpw = $helper}
+
+
+#Идентификация OC
 [string]$OC = Get-WmiObject win32_operatingsystem | % -MemberName caption
-[string]$OC = $OC -replace "Майкрософт"
-[string]$OC = $OC -replace "Microsoft"
+[string]$OC = $OC -replace "Майкрософт "
+[string]$OC = $OC -replace "Microsoft "
+$OCfam = "Windows"
+#Идентификация железа
 [string]$CN = Get-WmiObject win32_operatingsystem | % -MemberName pscomputername
 Get-WmiObject Win32_BaseBoard | fl *
 $ram = [string]((Get-WmiObject Win32_PhysicalMemory | % Capacity)/1Gb) +'Gb' + ' '+ [string](Get-WmiObject Win32_PhysicalMemory | % Manufacturer) + ' ' + [string](Get-WmiObject Win32_PhysicalMemory | % PartNumber)
+$MBman = Get-WmiObject Win32_BaseBoard | % Manufacturer
+$MB = switch ($MBman) {
+    'ASUSTeK COMPUTER INC.' {'ASUS'}
+    Default {}
+}
+$mbmodel = $MBman + ' ' + (Get-WmiObject Win32_BaseBoard | % Product)
 
-#, Manufacturer, PartNumber
+# Сбор в CSV
